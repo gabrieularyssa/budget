@@ -1,55 +1,58 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CreateBudgetsDto } from './dto/create-budgets.dto/create-budgets.dto';
+import { UpdateBudgetsDto } from './dto/update-budgets.dto/update-budgets.dto';
 import { Budget } from './entities/budget.entity';
+
 
 @Injectable()
 export class BudgetsService {
-    private budgets: Budget[] = [
-        {
-            id:1,
-            local: "perna",
-            tamanhoCM: "35cm",
-            cor:"preto",
-            detalhes:[
-                "traço fino",
-                "delicado",
-                "pouca sombra"
-            ],
-        },
-    ];
+    constructor(
+        @InjectRepository(Budget)
+        private readonly budgetRepository: Repository<Budget>,
+    ){}
 
     findAll(){
-        return this.budgets
+        return this.budgetRepository.find();
     }
 
     findOne(id: string){
-        const budget =  this.budgets.find((budget: Budget) => budget.id === Number(id))
+        const budget =  this.budgetRepository.findOne(id);
 
         if(!budget){
-            throw new HttpException(`O orcamento com ID ${id}, nao existe`, HttpStatus.NOT_FOUND)
+            throw new NotFoundException(`O orcamento com ID ${id}, nao existe`)
         }
-
         return budget
     }
 
-    create(createBudgetDTO: any){
-        this.budgets.push(createBudgetDTO)
+    create(createBudgetDTO: CreateBudgetsDto){
+        const budget = this.budgetRepository.create(createBudgetDTO)
         //retorna o que esta sendo salvo
-        return createBudgetDTO
+        return this.budgetRepository.save(budget)
     }
 
-    update(id: string, updateBudgetDTO: any){
-        const indexBudget = this.budgets.findIndex((budget: Budget) => budget.id === Number(id))
-        return this.budgets[indexBudget] = updateBudgetDTO
+    async update(id: string, updateBudgetDTO: UpdateBudgetsDto){
+        const budget = await this.budgetRepository.preload({
+            id: +id,
+            ...updateBudgetDTO, 
+        })
+
+        if(!budget){
+            throw new NotFoundException(`O orçamento de ID:${id} não pode ser encontrado`)
+        }
+
+        return this.budgetRepository.save(budget)
     }
 
-    remove(id: string){
-        const indexBudget = this.budgets.findIndex(
-            (budget: Budget) => budget.id === Number(id)
-        )
+    async remove(id: string){
+        const budget = await this.budgetRepository.findOne(id)
 
-        if (indexBudget >= 0) {
-            this.budgets.splice(indexBudget)
-        } 
+        if(!budget){
+            throw new NotFoundException(`O orçamento de ID:${id} não pode ser encontrado`)
+        }
+
+        return this.budgetRepository.remove(budget)
     }
 }
 

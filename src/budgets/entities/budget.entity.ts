@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('budgets')
 export class Budget {
@@ -16,6 +16,7 @@ export class Budget {
     cor: string;
 
     //string[] isso define um array de string
+    //@ManyToMany(type => Detalhes, detalhes => )
     @Column('json', { nullable: true })
     detalhes: string[];
 }
