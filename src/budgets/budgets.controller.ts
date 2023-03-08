@@ -18,10 +18,7 @@ export class BudgetsController {
 
     constructor(private budgetsService: BudgetsService){}
 
-    @Get('list')
-    // findAll(){
-    //     return 'Lista de orçamentos'
-    // }
+    @Get()
     findAll(){
         return this.budgetsService.findAll()
     }
